@@ -18,7 +18,9 @@ const locationRiskInput = document.getElementById('locationRisk');
 const timeOfDayInput = document.getElementById('timeOfDay');
 const isInternationalSelect = document.getElementById('isInternational');
 const ipCountryMismatchSelect = document.getElementById('ipCountryMismatch');
-const failedAuthAttemptsInput = document.getElementById('failedAuthAttempts'); // New: Get the input element
+const failedAuthAttemptsInput = document.getElementById('failedAuthAttempts');
+const cardValidationStatusSelect = document.getElementById('cardValidationStatus'); // New: Card Validation Status input
+const ipAddressInput = document.getElementById('ipAddress'); // New: IP Address input
 
 // Global state for dashboard statistics and recent predictions
 let totalTransactions = 0;
@@ -34,6 +36,19 @@ let svg, projection, path;
 let worldData; // To store loaded TopoJSON data
 let fraudulentCountryCounts = {}; // To store fraud counts per country
 
+// Function to fetch and set the user's IP address
+async function fetchUserIpAddress() {
+    try {
+        ipAddressInput.value = "Fetching IP...";
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        ipAddressInput.value = data.ip || 'N/A';
+    } catch (error) {
+        console.error('Error fetching IP address:', error);
+        ipAddressInput.value = 'Failed to fetch IP';
+    }
+}
+
 // Function to update summary statistics
 function updateSummaryStatistics() {
     totalTransactionsSpan.textContent = totalTransactions;
@@ -43,8 +58,8 @@ function updateSummaryStatistics() {
 // Function to update recent predictions table
 function updateRecentPredictionsTable() {
     if (recentPredictions.length === 0) {
-        // Updated colspan from 9 to 10 to account for the new column
-        recentPredictionsBody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">No predictions yet.</td></tr>';
+        // Updated colspan to 12 to account for the new 'Card Valid' and 'IP Address' columns
+        recentPredictionsBody.innerHTML = '<tr><td colspan="12" class="text-center py-4 text-gray-500">No predictions yet.</td></tr>';
         return;
     }
 
@@ -60,7 +75,9 @@ function updateRecentPredictionsTable() {
                 <td>${p.ip_country_mismatch ? 'Yes' : 'No'}</td>
                 <td>${p.simulated_category || 'N/A'}</td>
                 <td>${p.simulated_location_name || 'N/A'}</td>
-                <td>${p.failed_auth_attempts}</td> <!-- Display the new field -->
+                <td>${p.failed_auth_attempts}</td>
+                <td>${p.card_validation_status || 'N/A'}</td> <!-- Display new field -->
+                <td>${p.ip_address || 'N/A'}</td> <!-- Display IP Address -->
                 <td class="${fraudStatusClass}">${p.is_fraud ? 'Fraud' : 'No Fraud'}</td>
             </tr>
         `;
@@ -209,7 +226,9 @@ fraudDetectionForm.addEventListener('submit', async (e) => {
         time_of_day_hour: parseInt(timeOfDayInput.value),
         is_international: parseInt(isInternationalSelect.value),
         ip_country_mismatch: parseInt(ipCountryMismatchSelect.value),
-        failed_auth_attempts: parseInt(failedAuthAttemptsInput.value), // Include new input field value
+        failed_auth_attempts: parseInt(failedAuthAttemptsInput.value),
+        card_validation_status: cardValidationStatusSelect.value, // Include new input field value
+        ip_address: ipAddressInput.value, // Include captured IP address
     };
 
     try {
@@ -328,6 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateRecentPredictionsTable(); // Initialize as empty
     drawWorldMap(); // Draw the map on load
     updateAllCharts(); // Initialize charts
+    fetchUserIpAddress(); // Fetch user's IP on load
 
     // Set initial currency symbol in the label
     document.querySelector('label[for="amount"]').textContent = `Amount (${currentCurrencySymbol})`;

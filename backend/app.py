@@ -76,7 +76,9 @@ class Transaction(BaseModel):
     time_of_day_hour: int
     is_international: int
     ip_country_mismatch: int
-    failed_auth_attempts: int = 0 # Added failed_auth_attempts with a default value
+    failed_auth_attempts: int = 0
+    card_validation_status: str # New: Added card_validation_status
+    ip_address: str = None # New: Added ip_address with a default of None
 
 
 @app.get("/health")
@@ -102,11 +104,14 @@ async def predict_fraud(transaction: Transaction):
         transaction_data = transaction.dict()
         
         # NOTE: The current ML model (fraud_detection_model.joblib) is assumed to NOT
-        # use 'failed_auth_attempts' as a feature. If you wish for the model to
-        # incorporate this, the ML model would need to be retrained with this new feature.
-        # For now, we'll remove it from the data sent to predict to avoid errors
-        # if the model expects a fixed number of features.
-        data_for_prediction = {k: v for k, v in transaction_data.items() if k != 'failed_auth_attempts'}
+        # use 'failed_auth_attempts', 'card_validation_status', or 'ip_address' as features.
+        # If you wish for the model to incorporate these, the ML model would need to be retrained
+        # with these new features. For now, we'll remove them from the data sent to predict
+        # to avoid errors if the model expects a fixed number of features.
+        data_for_prediction = {
+            k: v for k, v in transaction_data.items()
+            if k not in ['failed_auth_attempts', 'card_validation_status', 'ip_address']
+        }
 
         prediction, probability = ml_service.predict(data_for_prediction)
         
