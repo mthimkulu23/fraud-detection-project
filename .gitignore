@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Data and Models
+data/models/*.joblib # Ignore actual model files if they are large and managed separately,
+                     # but for this small project, we'll keep it tracked.
+                     # If you want to ignore the model: data/models/
+data/*.csv
+data/*.xlsx
+
+# IDEs
+.vscode/
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
